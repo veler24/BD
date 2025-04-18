@@ -1,13 +1,33 @@
+from django.contrib import admin
 from django.urls import path, include
-from . import views
-from django.contrib.auth import views as auth_views
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularSwaggerView,
+    SpectacularRedocView
+)
+from django.conf import settings
+from django.conf.urls.static import static
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenVerifyView, TokenRefreshView
 
 urlpatterns = [
-    path('', views.ThemesOfForumView.as_view(), name='home'),
-    path('forum/<int:forum_id>/', views.ThemesView.as_view(), name='themes'),
-    path('theme/<int:theme_id>/', views.MessageView.as_view(), name='message'),
-    path('profile/', views.profile_view, name="profile"),
-    path('register/', views.RegisterView.as_view(), name="register"),
-    path('createForum', views.create_forum, name="createForum"),
-    path('forum/<int:forum_id>/create_theme', views.create_theme, name="createTheme"),
-]
+    path('', include('main.urls')),
+    path('admin/', admin.site.urls, name='admin'),
+    path('', include('api.urls')),
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    # Optional UI:
+    path(
+        'api/schema/swagger-ui/',
+        SpectacularSwaggerView.as_view(url_name='schema'),
+        name='swagger-ui'
+    ),
+    path(
+        'api/schema/redoc/',
+        SpectacularRedocView.as_view(url_name='schema'),
+        name='redoc'
+    ),
+    path('accounts/', include("django.contrib.auth.urls")),
+
+    path('account/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),     # получаем токен, потом crud
+    path('account/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('account/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
